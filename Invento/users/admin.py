@@ -1,9 +1,15 @@
 from django.contrib import admin
-from .models import User, Id
-from django.contrib.auth.admin import UserAdmin
+from .models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 # Register your models here.
 
 
-admin.site.register(User, UserAdmin)
-admin.site.register(Id)
+class CustomUserAdmin(BaseUserAdmin):
+    list_display = ('username', 'email', 'created', 'last_accessed', 'is_superuser')
+
+    list_filter = ( 'username', 'email', 'is_superuser', 'created')
+
+
+
+admin.site.register(User, CustomUserAdmin)
