@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "store.apps.StoreConfig",
     "users.apps.UsersConfig",
     "rest_framework",
+    'rest_framework.authtoken',
+    'dj_rest_auth'
 ]
 
 MIDDLEWARE = [
@@ -137,12 +139,13 @@ AUTH_USER_MODEL = "users.User"
 
 
 REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
+    )
 }
 
-
 LOGIN_REDIRECT_URL = '/api/item'
+
+REST_AUTH = {
+    'USE_JWT': True,
+}
