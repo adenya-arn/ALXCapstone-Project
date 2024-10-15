@@ -3,10 +3,12 @@ from store.models import Item, Category
 from .serializers import ItemSerializer, CategorySerializer
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-
+from .permissions import IsOwnerOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 
 class CategoryViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     #This is used to list everything in the category model
     def list(self, request):
@@ -19,8 +21,7 @@ class CategoryViewSet(viewsets.ViewSet):
     def create(self, request):
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            print(serializer.data)
+            serializer.save(creator=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -33,6 +34,7 @@ class CategoryViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         queryset = get_object_or_404(Category, pk=pk)
+        self.check_object_permissions(request, queryset)
         serializer = CategorySerializer(queryset, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -43,6 +45,7 @@ class CategoryViewSet(viewsets.ViewSet):
     
     def destroy(self, request, pk=None):
         queryset = get_object_or_404(Category, pk=pk)
+        self.check_object_permissions(request, queryset)
         queryset.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -66,7 +69,7 @@ class ItemViewSet(viewsets.ViewSet):
     def create(self, request):
         serializer = ItemSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(creator=request.user)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
@@ -74,7 +77,8 @@ class ItemViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         queryset = get_object_or_404(Item, pk=pk)
-        serializer = ItemSerializer(queryset, request.data, partial=True)
+        self.check_object_permissions(request, queryset)
+        serializer = ItemSerializer(queryset, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
 
@@ -84,16 +88,10 @@ class ItemViewSet(viewsets.ViewSet):
 
     def destroy(self, request, pk=None):
         queryset = get_object_or_404(Item, pk=pk)
+        self.check_object_permissions(request, queryset)
         queryset.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CategoryViewset1(viewsets.ModelViewSet):
-    serializer_class = CategorySerializer
-    queryset = Category.objects.all()
-
-
-class ItemViewset1(viewsets.ModelViewSet):
-    serializer_class = ItemSerializer 
-    queryset =  Item.objects.all()  
+  
