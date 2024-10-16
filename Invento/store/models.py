@@ -22,3 +22,13 @@ class Item(models.Model):
     
     def __str__(self):
         return f'{self.name}/n - {self.price} - {self.quantity} in {self.category}'
+    
+
+class InventoryChange(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    change_quantity = models.DecimalField(max_digits=6, decimal_places=2)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    date_changed = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Change of {self.change_quantity} for {self.item.name} by {self.user.username} on {self.date_changed}'

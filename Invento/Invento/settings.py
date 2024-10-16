@@ -25,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-6+u+)j^1)jywqfm3-&9a%#20wnb-mqoa33q4lcz^nm4ni-8*q("
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['adenyaarn.pythonanywhere.com']
 
 
 # Application definition
@@ -140,7 +140,13 @@ AUTH_USER_MODEL = "users.User"
 
 
 REST_FRAMEWORK = {
+   'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,     
+    'DEFAULT_FILTER_BACKENDS': [
+    'rest_framework.filters.OrderingFilter',
+    ], 
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -154,5 +160,8 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
+
+
+CSRF_TRUSTED_ORIGINS = ['https://adenya-arn.pythonanywhere.com']
 
 
