@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-6+u+)j^1)jywqfm3-&9a%#20wnb-mqoa33q4lcz^nm4ni-8*q(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['adenyaarn.pythonanywhere.com']
+ALLOWED_HOSTS = ['adenyaarn.pythonanywhere.com', "127.0.0.1"]
 
 
 # Application definition
@@ -83,7 +83,7 @@ WSGI_APPLICATION = "Invento.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "INVENTO",
+        "NAME": "Invento",
         "USER": "root",
         "HOST": "127.0.0.1",
         "PORT": "3306",
