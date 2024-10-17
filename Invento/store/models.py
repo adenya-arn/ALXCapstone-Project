@@ -2,6 +2,15 @@ from django.db import models
 from django.conf import settings
 # Create your models here.
 
+class Supplier(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField(max_length=255, unique=True)
+    contact = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f'{self.name} -- {self.contact}/{self.email}'
+
+
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
@@ -19,7 +28,12 @@ class Item(models.Model):
     date_added = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
-    
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True        )
+    minimum = models.PositiveIntegerField(default=10)
+
+    def is_below_minimum(self):
+        return self.quantity < self.minimum
+
     def __str__(self):
         return f'{self.name}/n - {self.price} - {self.quantity} in {self.category}'
     

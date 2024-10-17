@@ -1,5 +1,5 @@
 from rest_framework  import serializers
-from store.models import Item, Category
+from store.models import Item, Category, Supplier, InventoryChange
 
 class ItemSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
@@ -17,3 +17,15 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'creator']
+
+
+class InventoryChangeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InventoryChange
+        fields = '__all__'
+
+
+class SupplierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Supplier
+        fields = '__all__'

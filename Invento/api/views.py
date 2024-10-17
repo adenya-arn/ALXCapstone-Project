@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
-from store.models import Item, Category, InventoryChange
-from .serializers import ItemSerializer, CategorySerializer
+from store.models import Item, Category, InventoryChange, Supplier
+from .serializers import ItemSerializer, CategorySerializer, SupplierSerializer
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .permissions import IsOwnerOrReadOnly
@@ -156,3 +156,6 @@ class InventoryChangeViewSet(viewsets.ViewSet):
         return Response(change_data, status=status.HTTP_200_OK)
 
   
+class SupplierViewSet(viewsets.ModelViewSet):
+    serializer_class = SupplierSerializer
+    queryset = Supplier.objects.all()
