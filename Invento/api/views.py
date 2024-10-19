@@ -1,11 +1,13 @@
 from django.shortcuts import render, get_object_or_404
-from store.models import Item, Category, InventoryChange, Supplier
-from .serializers import ItemSerializer, CategorySerializer, SupplierSerializer
+from store.models import Item, Category, InventoryChange, Supplier, Transaction
+from .serializers import ItemSerializer, CategorySerializer, SupplierSerializer, TransactionSerializer
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .permissions import IsOwnerOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.decorators import action
+from django.db.models import F
 # Create your views here.
 
 class CategoryViewSet(viewsets.ViewSet):
@@ -159,3 +161,75 @@ class InventoryChangeViewSet(viewsets.ViewSet):
 class SupplierViewSet(viewsets.ModelViewSet):
     serializer_class = SupplierSerializer
     queryset = Supplier.objects.all()
+    permission_classes = [IsAuthenticated]
+
+
+class InventoryReportViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'], url_path='total_inventory_value')
+    def total_inventory_value(self, request):
+        total_value = sum(item.total_value() for item in Item.objects.all())
+        return Response({"total_inventory_value": total_value})
+
+class StockLevelReportViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        low_stock = request.query_params.get('low_stock', None)
+        if low_stock == 'true':
+            items = Item.objects.filter(quantity__lt=F('threshold'))
+        else:
+            items = Item.objects.all()
+
+        stock_data = [{"name": item.name, "quantity": item.quantity, "threshold": item.threshold} for item in items]
+        return Response(stock_data)
+
+class TransactionHistoryViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        sales = Transaction.objects.filter(transaction_type='sale')
+        restocks = Transaction.objects.filter(transaction_type='restock')
+
+        sales_data = [{"item": sale.item.name, "quantity": sale.quantity, "date": sale.date} for sale in sales]
+        restock_data = [{"item": restock.item.name, "quantity": restock.quantity, "date": restock.date} for restock in restocks]
+
+        return Response({
+            "sales": sales_data,
+            "restocks": restock_data
+        })
+    
+    def retrieve(self, request, pk=None):
+        try:
+            transaction = Transaction.objects.get(pk=pk)
+            serializer = TransactionSerializer(transaction)
+            return Response(serializer.data)
+        except Transaction.DoesNotExist:
+            return Response({"detail": "Transaction not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def create(self, request):
+        serializer = TransactionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        try:
+            transaction = Transaction.objects.get(pk=pk)
+            serializer = TransactionSerializer(transaction, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Transaction.DoesNotExist:
+            return Response({"detail": "Transaction not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def destroy(self, request, pk=None):
+        try:
+            transaction = Transaction.objects.get(pk=pk)
+            transaction.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Transaction.DoesNotExist:
+            return Response({"detail": "Transaction not found."}, status=status.HTTP_404_NOT_FOUND)

@@ -1,5 +1,5 @@
 from rest_framework  import serializers
-from store.models import Item, Category, Supplier, InventoryChange
+from store.models import Item, Category, Supplier, InventoryChange,  Transaction
 
 class ItemSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
@@ -7,7 +7,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ['id', 'name', 'description', 'quantity', 'price', 'category', 'category_name']
+        fields = ['id', 'name', 'description', 'quantity', 'price', 'category', 'category_name', 'threshold']
 
     def get_category_name(self, obj):
         return obj.category.name
@@ -28,4 +28,10 @@ class InventoryChangeSerializer(serializers.ModelSerializer):
 class SupplierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Supplier
+        fields = '__all__'
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
         fields = '__all__'
