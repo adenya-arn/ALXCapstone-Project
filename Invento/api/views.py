@@ -199,7 +199,7 @@ class TransactionHistoryViewSet(viewsets.ViewSet):
             "sales": sales_data,
             "restocks": restock_data
         })
-    
+
     def retrieve(self, request, pk=None):
         try:
             transaction = Transaction.objects.get(pk=pk)
@@ -211,24 +211,59 @@ class TransactionHistoryViewSet(viewsets.ViewSet):
     def create(self, request):
         serializer = TransactionSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            transaction = serializer.save()
+
+            # Update the item's quantity based on transaction type
+            if transaction.transaction_type == 'sale':
+                transaction.item.quantity -= transaction.quantity
+            elif transaction.transaction_type == 'restock':
+                transaction.item.quantity += transaction.quantity
+
+            transaction.item.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk=None):
         try:
             transaction = Transaction.objects.get(pk=pk)
+            old_quantity = transaction.quantity  # Store the old quantity for adjustment
+            old_transaction_type = transaction.transaction_type  # Store the old type
+            
             serializer = TransactionSerializer(transaction, data=request.data)
             if serializer.is_valid():
-                serializer.save()
+                updated_transaction = serializer.save()
+
+                # Adjust the item quantity based on the old transaction data
+                if old_transaction_type == 'sale':
+                    transaction.item.quantity += old_quantity  # Revert sale deduction
+                elif old_transaction_type == 'restock':
+                    transaction.item.quantity -= old_quantity  # Revert restock addition
+
+                # Adjust the item quantity based on the new transaction data
+                if updated_transaction.transaction_type == 'sale':
+                    transaction.item.quantity -= updated_transaction.quantity
+                elif updated_transaction.transaction_type == 'restock':
+                    transaction.item.quantity += updated_transaction.quantity
+
+                transaction.item.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         except Transaction.DoesNotExist:
             return Response({"detail": "Transaction not found."}, status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, pk=None):
         try:
             transaction = Transaction.objects.get(pk=pk)
+
+            # Adjust the item quantity before deletion
+            if transaction.transaction_type == 'sale':
+                transaction.item.quantity += transaction.quantity  # Revert sale
+            elif transaction.transaction_type == 'restock':
+                transaction.item.quantity -= transaction.quantity  # Revert restock
+
+            transaction.item.save()
             transaction.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Transaction.DoesNotExist:
